@@ -37,31 +37,20 @@
                 align-items: center;
             }
 
-            #zonaSuperiorDerecha {
-                display: flex;
-                gap: 10px;
-            }
-
-            #deckZone,
-            #discardZone {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-
             .card {
-                width: 20vw;
+                width: 18vw;
                 aspect-ratio: 10/16;
                 border-radius: 12px;
-                border: 2px solid black;
+                border: 1vw solid black;
                 background: white;
                 box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                font-size: 28px;
-                margin: 10px;
+                font-size: 15vw;
+                margin: 5px;
+                margin-top:0;
                 transition: transform 0.3s;
                 user-select: none;
                 font-weight: bold;
@@ -72,11 +61,11 @@
             }
 
             .card-back {
-                width: 20vw;
-                aspect-ratio: 10/16;
-                border: 3px solid white;
+                width: 18vw;
+                aspect-ratio: 10 / 16;
+                border: 1vw solid white;
                 border-radius: 12px;
-                background-color: darkslategrey;
+                background-color: white;
                 background-image: repeating-linear-gradient(
                         45deg,
                         royalblue,
@@ -92,6 +81,7 @@
                         transparent 0px
                     );
                 box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
+
             }
 
             .card.selected {
@@ -120,13 +110,16 @@
                 top: 0;
                 left: 0;
                 width: 100%;
+                height:42vw;
                 z-index: 2;
                 color: white;
                 background: rgba(0, 0, 0, 0.4);
                 padding: 15px 30px;
                 backdrop-filter: blur(4px);
                 display: flex;
+                flex-direction: row;
                 justify-content: space-between;
+                gap:3px
                 align-items: center;
                 box-sizing: border-box;
             }
@@ -135,6 +128,19 @@
                 display: flex;
                 flex-direction: column;
                 gap: 6px;
+            }
+
+            #ui-right {
+                display: flex;
+                flex-direction: row;
+                gap: 6px;
+            }
+
+            #deckZone,
+            #discardZone {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
             #ui button {
@@ -152,11 +158,6 @@
                 margin: 4px 0;
             }
 
-            #options {
-                display: none;
-            }
-
-            /* === Botón Siguiente Carta === */
             #boton-nextturn {
                 position: absolute;
                 bottom: 20px;
@@ -174,6 +175,10 @@
                 border-radius: 8px;
                 cursor: pointer;
                 box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            #options {
+                display: none;
             }
 
             /* === Modal Fin de Juego === */
@@ -222,6 +227,32 @@
                     opacity: 0;
                 }
             }
+
+            /* === Animaciones === */
+            @keyframes puntoAnotado {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.4);
+                    color: gold;
+                }
+                100% {
+                    transform: scale(1);
+                    color: white;
+                }
+            }
+
+            #score.animated {
+                animation: puntoAnotado 0.6s ease;
+            }
+
+            .carta-animada {
+                position: absolute;
+                transition: transform 0.5s ease;
+                z-index: 1000;
+                pointer-events: none;
+            }
         </style>
     </head>
     <body>
@@ -233,7 +264,7 @@
                 <p>Puntaje: <span id="score">0</span></p>
                 <p>Puntaje Máximo: <span id="max-score">0</span></p>
             </div>
-            <div id="zonaSuperiorDerecha">
+            <div id="ui-right">
                 <div class="zone" id="deckZone"></div>
                 <div class="zone" id="discardZone"></div>
             </div>
@@ -248,7 +279,6 @@
             <button onclick="nextTurn()">Siguiente carta</button>
         </div>
 
-        <!-- Modal Fin de Juego -->
         <div id="modalOverlay">
             <div id="modalContent">
                 <h2>¡Fin del juego!</h2>
@@ -324,11 +354,9 @@
 
                 if (back && cards.length > 0) {
                     if (zoneId === "discardZone") {
-                        // Mostrar la última carta descartada boca arriba
                         const lastCard = cards[cards.length - 1];
                         zone.appendChild(renderCard(lastCard));
                     } else {
-                        // Mostrar dorso si no es discardZone
                         zone.appendChild(renderBack());
                     }
                 } else {
@@ -359,17 +387,52 @@
                 mostrarOpciones();
             }
 
+            function animarMovimientoCarta(origenElem, destinoElem, callback) {
+                const cartaClon = origenElem.cloneNode(true);
+                const origenRect = origenElem.getBoundingClientRect();
+                const destinoRect = destinoElem.getBoundingClientRect();
+
+                cartaClon.classList.add("carta-animada");
+                document.body.appendChild(cartaClon);
+
+                cartaClon.style.left = `${origenRect.left}px`;
+                cartaClon.style.top = `${origenRect.top}px`;
+                cartaClon.style.width = `${origenRect.width}px`;
+                cartaClon.style.height = `${origenRect.height}px`;
+
+                requestAnimationFrame(() => {
+                    cartaClon.style.transform = `translate(${
+                        destinoRect.left - origenRect.left
+                    }px, ${destinoRect.top - origenRect.top}px)`;
+                });
+
+                setTimeout(() => {
+                    document.body.removeChild(cartaClon);
+                    if (callback) callback();
+                }, 500);
+            }
+
             function nextTurn() {
                 if (deck.length === 0) return;
                 const carta = deck.pop();
                 table.push(carta);
                 actualizarPantalla();
+
+                setTimeout(() => {
+                    const deckZone = document.getElementById("deckZone");
+                    const tableZone = document.getElementById("tableZone");
+                    const cartaMesa = tableZone.lastElementChild;
+                    const cartaMazo = deckZone.querySelector(".card-back");
+                    if (cartaMesa && cartaMazo) {
+                        animarMovimientoCarta(cartaMazo, cartaMesa);
+                    }
+                }, 50);
+
                 checkGameEnd();
             }
 
             function encontrarCombinaciones(cards, objetivo = 20) {
                 const resultados = [];
-
                 function buscar(comb, start, suma) {
                     if (suma === objetivo) {
                         resultados.push([...comb]);
@@ -382,7 +445,6 @@
                         comb.pop();
                     }
                 }
-
                 buscar([], 0, 0);
                 return resultados;
             }
@@ -409,16 +471,32 @@
 
             function seleccionarCombinacion(indices) {
                 const seleccionadas = indices.map(i => table[i]);
+                const tableZone = document.getElementById("tableZone");
+                const discardZone = document.getElementById("discardZone");
+
+                indices.forEach(i => {
+                    const elem = tableZone.children[i];
+                    if (elem) animarMovimientoCarta(elem, discardZone);
+                });
+
                 discardPile.push(...seleccionadas);
                 table = table.filter((_, i) => !indices.includes(i));
                 cartasSeleccionadas = [];
+
                 if (table.length === 0) {
                     score++;
                     if (score > maxScore) {
                         maxScore = score;
                         localStorage.setItem("maxScore", maxScore);
                     }
+                    const scoreElem = document.getElementById("score");
+                    scoreElem.classList.add("animated");
+                    setTimeout(
+                        () => scoreElem.classList.remove("animated"),
+                        600
+                    );
                 }
+
                 actualizarPantalla();
                 checkGameEnd();
             }
@@ -426,7 +504,6 @@
             function validarSeleccion() {
                 const seleccionadas = cartasSeleccionadas.map(i => table[i]);
                 const suma = seleccionadas.reduce((acc, c) => acc + c.valor, 0);
-
                 if (suma === 20) {
                     seleccionarCombinacion([...cartasSeleccionadas]);
                     cartasSeleccionadas = [];
@@ -439,11 +516,8 @@
                 discardPile = [];
                 score = 0;
                 cartasSeleccionadas = [];
-
-                // Leer puntaje máximo del localStorage
                 const guardado = localStorage.getItem("maxScore");
                 maxScore = guardado ? parseInt(guardado) : 0;
-
                 actualizarPantalla();
             }
 
@@ -451,7 +525,7 @@
                 const sinCartas = deck.length === 0;
                 const sinOpciones = encontrarCombinaciones(table).length === 0;
                 if (sinCartas && sinOpciones) {
-                    setTimeout(mostrarModalFin, 5000); // Espera 5000 ms = 5 segundos
+                    setTimeout(mostrarModalFin, 5000);
                 }
             }
 
