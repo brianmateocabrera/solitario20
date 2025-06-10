@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Solitario 20</title>
         <style>
+            /* === Reseteo y Estilos Generales === */
             body,
             html {
                 margin: 0;
@@ -14,6 +15,7 @@
                 font-family: "Segoe UI", sans-serif;
             }
 
+            /* === Fondo de Pantalla === */
             #fondo {
                 position: absolute;
                 top: 0;
@@ -24,6 +26,7 @@
                 z-index: 0;
             }
 
+            /* === Capa de Cartas === */
             #capa-cartas {
                 position: absolute;
                 top: 0;
@@ -37,6 +40,7 @@
                 align-items: center;
             }
 
+            /* === Estilos de Cartas === */
             .card {
                 width: 18vw;
                 aspect-ratio: 10/16;
@@ -50,7 +54,7 @@
                 align-items: center;
                 font-size: 15vw;
                 margin: 5px;
-                margin-top:0;
+                margin-top: 0;
                 transition: transform 0.3s;
                 user-select: none;
                 font-weight: bold;
@@ -81,7 +85,6 @@
                         transparent 0px
                     );
                 box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
-
             }
 
             .card.selected {
@@ -89,12 +92,14 @@
                 transform: scale(1.1);
             }
 
+            /* === Etiquetas de Cuenta === */
             .count-label {
                 margin-top: 0.5rem;
                 font-size: 0.9rem;
                 color: white;
             }
 
+            /* === Zona de la Mesa === */
             #tableZone {
                 display: flex;
                 flex-wrap: wrap;
@@ -104,13 +109,13 @@
                 margin: 0 auto;
             }
 
-            /* === UI Barra Superior === */
+            /* === Barra Superior de UI === */
             #ui {
                 position: absolute;
                 top: 0;
                 left: 0;
                 width: 100%;
-                height:42vw;
+                height: 42vw;
                 z-index: 2;
                 color: white;
                 background: rgba(0, 0, 0, 0.4);
@@ -119,7 +124,7 @@
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
-                gap:3px
+                gap: 3px;
                 align-items: center;
                 box-sizing: border-box;
             }
@@ -158,6 +163,7 @@
                 margin: 4px 0;
             }
 
+            /* === Botón de Próximo Turno === */
             #boton-nextturn {
                 position: absolute;
                 bottom: 20px;
@@ -177,11 +183,12 @@
                 box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
             }
 
+            /* === Opciones de Juego === */
             #options {
                 display: none;
             }
 
-            /* === Modal Fin de Juego === */
+            /* === Modal de Fin de Juego === */
             #modalOverlay {
                 position: fixed;
                 inset: 0;
@@ -224,29 +231,30 @@
                     opacity: 1;
                 }
                 50% {
-                    opacity: 0;
+                    opacity: 0.5;
                 }
             }
 
             /* === Animaciones === */
             @keyframes puntoAnotado {
                 0% {
-                    transform: scale(1);
+                    transform: scale(2);
                 }
                 50% {
-                    transform: scale(1.4);
+                    transform: scale(0.4);
                     color: gold;
                 }
                 100% {
-                    transform: scale(1);
+                    transform: scale(2);
                     color: white;
                 }
             }
 
             #score.animated {
-                animation: puntoAnotado 0.6s ease;
+                animation: puntoAnotado 0.5s ease;
             }
 
+            /* === Animación de Cartas === */
             .carta-animada {
                 position: absolute;
                 transition: transform 0.5s ease;
@@ -290,6 +298,7 @@
         </div>
 
         <script>
+            // === Constantes de Configuración ===
             const colores = ["rojo", "azul", "amarillo", "verde"];
             const colorMap = {
                 rojo: "firebrick",
@@ -298,6 +307,8 @@
                 verde: "seagreen"
             };
             const valores = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+            // === Estado del Juego ===
             let deck = [];
             let table = [];
             let discardPile = [];
@@ -305,6 +316,19 @@
             let score = 0;
             let maxScore = 0;
 
+            // === Inicialización ===
+            function iniciarJuego() {
+                crearMazo();
+                table = [];
+                discardPile = [];
+                cartasSeleccionadas = [];
+                score = 0;
+                const guardado = localStorage.getItem("maxScore");
+                maxScore = guardado ? parseInt(guardado) : 0;
+                actualizarPantalla();
+            }
+
+            // === Lógica del Mazo ===
             function crearMazo() {
                 deck = [];
                 for (let color of colores) {
@@ -312,21 +336,21 @@
                         deck.push({ valor, color });
                     }
                 }
-                deck = deck.sort(() => Math.random() - 0.5);
+                deck.sort(() => Math.random() - 0.5); // Mezclar
             }
 
+            // === Renderizado de Cartas ===
             function renderCard(card, index) {
                 const div = document.createElement("div");
                 div.className = "card";
-                div.textContent = `${card.valor}`;
+                div.textContent = card.valor;
                 const cssColor = colorMap[card.color];
                 div.style.borderColor = cssColor;
                 div.style.color = cssColor;
                 div.dataset.index = index;
 
-                if (cartasSeleccionadas.includes(index)) {
+                if (cartasSeleccionadas.includes(index))
                     div.classList.add("selected");
-                }
 
                 div.onclick = () => {
                     const idx = cartasSeleccionadas.indexOf(index);
@@ -354,22 +378,20 @@
 
                 if (back && cards.length > 0) {
                     if (zoneId === "discardZone") {
-                        const lastCard = cards[cards.length - 1];
-                        zone.appendChild(renderCard(lastCard));
+                        zone.appendChild(renderCard(cards[cards.length - 1]));
                     } else {
                         zone.appendChild(renderBack());
                     }
                 } else {
-                    if (zoneId === "tableZone") {
-                        cards.forEach((card, index) => {
-                            zone.appendChild(renderCard(card, index));
-                        });
-                    } else {
-                        for (let card of cards) {
-                            zone.appendChild(renderCard(card));
-                        }
-                    }
+                    cards.forEach((card, index) => {
+                        zone.appendChild(
+                            zoneId === "tableZone"
+                                ? renderCard(card, index)
+                                : renderCard(card)
+                        );
+                    });
                 }
+
                 if (zoneId !== "tableZone") {
                     const countText = document.createElement("div");
                     countText.className = "count-label";
@@ -378,15 +400,17 @@
                 }
             }
 
+            // === Pantalla ===
             function actualizarPantalla() {
                 renderZone("deckZone", deck, true, "Mazo");
-                renderZone("tableZone", table, false, "Mesa");
+                renderZone("tableZone", table, false);
                 renderZone("discardZone", discardPile, true, "Descarte");
                 document.getElementById("score").textContent = score;
                 document.getElementById("max-score").textContent = maxScore;
                 mostrarOpciones();
             }
 
+            // === Animación de Movimiento ===
             function animarMovimientoCarta(origenElem, destinoElem, callback) {
                 const cartaClon = origenElem.cloneNode(true);
                 const origenRect = origenElem.getBoundingClientRect();
@@ -412,8 +436,10 @@
                 }, 500);
             }
 
+            // === Turno ===
             function nextTurn() {
                 if (deck.length === 0) return;
+
                 const carta = deck.pop();
                 table.push(carta);
                 actualizarPantalla();
@@ -423,21 +449,18 @@
                     const tableZone = document.getElementById("tableZone");
                     const cartaMesa = tableZone.lastElementChild;
                     const cartaMazo = deckZone.querySelector(".card-back");
-                    if (cartaMesa && cartaMazo) {
+                    if (cartaMesa && cartaMazo)
                         animarMovimientoCarta(cartaMazo, cartaMesa);
-                    }
                 }, 50);
 
                 checkGameEnd();
             }
 
+            // === Combinaciones ===
             function encontrarCombinaciones(cards, objetivo = 20) {
                 const resultados = [];
                 function buscar(comb, start, suma) {
-                    if (suma === objetivo) {
-                        resultados.push([...comb]);
-                        return;
-                    }
+                    if (suma === objetivo) return resultados.push([...comb]);
                     if (suma > objetivo) return;
                     for (let i = start; i < cards.length; i++) {
                         comb.push(i);
@@ -449,24 +472,35 @@
                 return resultados;
             }
 
+            function validarSeleccion() {
+                const seleccionadas = cartasSeleccionadas.map(i => table[i]);
+                const suma = seleccionadas.reduce((acc, c) => acc + c.valor, 0);
+                if (suma === 20) {
+                    seleccionarCombinacion([...cartasSeleccionadas]);
+                    cartasSeleccionadas = [];
+                }
+            }
+
+            // === Opciones y Combinaciones ===
             function mostrarOpciones() {
                 const opciones = encontrarCombinaciones(table);
                 const contenedor = document.getElementById("options");
                 contenedor.innerHTML =
                     '<h3 style="color:white;">Opciones:</h3>';
-                opciones.forEach((combo, index) => {
-                    const btn = document.createElement("button");
-                    btn.textContent =
-                        "Opción " +
-                        (index + 1) +
-                        ": " +
-                        combo.map(i => table[i].valor).join("+");
-                    btn.onclick = () => seleccionarCombinacion(combo);
-                    contenedor.appendChild(btn);
-                });
-                if (opciones.length === 0)
+
+                if (opciones.length === 0) {
                     contenedor.innerHTML +=
                         '<p style="color:white;">No hay combinaciones disponibles.</p>';
+                } else {
+                    opciones.forEach((combo, index) => {
+                        const btn = document.createElement("button");
+                        btn.textContent = `Opción ${index + 1}: ${combo
+                            .map(i => table[i].valor)
+                            .join(" + ")}`;
+                        btn.onclick = () => seleccionarCombinacion(combo);
+                        contenedor.appendChild(btn);
+                    });
+                }
             }
 
             function seleccionarCombinacion(indices) {
@@ -501,32 +535,11 @@
                 checkGameEnd();
             }
 
-            function validarSeleccion() {
-                const seleccionadas = cartasSeleccionadas.map(i => table[i]);
-                const suma = seleccionadas.reduce((acc, c) => acc + c.valor, 0);
-                if (suma === 20) {
-                    seleccionarCombinacion([...cartasSeleccionadas]);
-                    cartasSeleccionadas = [];
-                }
-            }
-
-            function iniciarJuego() {
-                crearMazo();
-                table = [];
-                discardPile = [];
-                score = 0;
-                cartasSeleccionadas = [];
-                const guardado = localStorage.getItem("maxScore");
-                maxScore = guardado ? parseInt(guardado) : 0;
-                actualizarPantalla();
-            }
-
+            // === Fin del Juego ===
             function checkGameEnd() {
                 const sinCartas = deck.length === 0;
                 const sinOpciones = encontrarCombinaciones(table).length === 0;
-                if (sinCartas && sinOpciones) {
-                    setTimeout(mostrarModalFin, 5000);
-                }
+                if (sinCartas && sinOpciones) setTimeout(mostrarModalFin, 5000);
             }
 
             function mostrarModalFin() {
@@ -539,6 +552,7 @@
                 iniciarJuego();
             }
 
+            // === Iniciar Juego ===
             iniciarJuego();
         </script>
     </body>
